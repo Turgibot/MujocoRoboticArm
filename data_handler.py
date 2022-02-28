@@ -2,7 +2,8 @@ import numpy as np
 import cv2
 def proccess_shared_data(shared_data):
     prev_frame = None
-    colored_frame = None
+    spike_frame = None
+    prev_spike_frame = None
 
     while True:
         width = shared_data[0]
@@ -14,6 +15,8 @@ def proccess_shared_data(shared_data):
             params = list(shared_data[5])
             frame = np.array(list(image_data), dtype = np.uint8)
             depth_frame = np.array(list(depth_data), dtype = np.uint8)
+            if frame.max == 0:
+                print("Found 0 frame")
         except:
             params = None
 
@@ -29,12 +32,18 @@ def proccess_shared_data(shared_data):
 
        
         frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        prev_frame, colored_frame = get_spike_frame(width, height, frame_gray, prev_frame) # TODO add thresholds
-        if colored_frame is not None:
-            all_frames = cv2.vconcat([frame, depth_frame_bgr, colored_frame])
-            cv2.imshow("", all_frames)
-            if cv2.waitKey(1) == 27:
-                break
+        prev_frame, spike_frame = get_spike_frame(frame_gray, prev_frame) # TODO add thresholds
+        if spike_frame is None:
+            if prev_spike_frame is not None:
+                spike_frame = prev_spike_frame.copy()
+            else:
+                continue
+    
+        prev_spike_frame = spike_frame.copy()
+        all_frames = cv2.vconcat([frame, depth_frame_bgr, spike_frame])
+        cv2.imshow("", all_frames)
+        if cv2.waitKey(1) == 27:
+            break
     
     cv2.destroyAllWindows()
 
@@ -59,7 +68,9 @@ def get_depth_frame(width, height, frame):
     frame = cv2.flip(frame, 0)
     return frame
 
-def get_spike_frame(width, height, frame, prev_frame):
+def get_spike_frame(frame, prev_frame):
+    if np.array_equal(frame ,prev_frame):
+        return frame, None
     pos_th = 4
     neg_th = 4
     

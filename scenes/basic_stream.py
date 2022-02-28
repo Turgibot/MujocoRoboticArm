@@ -11,10 +11,10 @@ from project.simulation.mjremote import mjremote
 
 
 def run(with_unity=False):
-    unity_src = "./unity_builds/Basic.x86_64 &"
+    unity_src = "./unity_builds/BasicWithStream.x86_64 &"
     unity = None
     if with_unity:
-        # os.system(unity_src)
+        os.system(unity_src)
         time.sleep(5)
         unity = mjremote()
         while not unity._s:  
