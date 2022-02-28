@@ -2,8 +2,11 @@ import numpy as np
 import cv2
 def proccess_shared_data(shared_data):
     prev_frame = None
+    prev_depth_frame = None
+    prev_gray_frame = None
     spike_frame = None
     prev_spike_frame = None
+    prev_timestamp = None
 
     while True:
         width = shared_data[0]
@@ -18,11 +21,16 @@ def proccess_shared_data(shared_data):
             if frame.max == 0:
                 print("Found 0 frame")
         except:
-            params = None
-
-        if params is None:
+            continue
+        
+        if prev_timestamp == timestamp:
+            all_frames = cv2.vconcat([prev_frame, prev_depth_frame, prev_spike_frame])
+            cv2.imshow("", all_frames)
+            if cv2.waitKey(1) == 27:
+                break
             continue
 
+        prev_timestamp = timestamp
         #if shared_data is x than y
 
         frame = get_frame(width, height, frame)
@@ -32,18 +40,23 @@ def proccess_shared_data(shared_data):
 
        
         frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        prev_frame, spike_frame = get_spike_frame(frame_gray, prev_frame) # TODO add thresholds
+        prev_gray_frame, spike_frame = get_spike_frame(frame_gray, prev_gray_frame) # TODO add thresholds
         if spike_frame is None:
             if prev_spike_frame is not None:
                 spike_frame = prev_spike_frame.copy()
             else:
                 continue
-    
-        prev_spike_frame = spike_frame.copy()
+       
+        
+        
         all_frames = cv2.vconcat([frame, depth_frame_bgr, spike_frame])
         cv2.imshow("", all_frames)
         if cv2.waitKey(1) == 27:
             break
+        prev_spike_frame = spike_frame.copy()
+        prev_depth_frame = depth_frame_bgr.copy()
+        prev_frame = frame.copy()
+
     
     cv2.destroyAllWindows()
 
