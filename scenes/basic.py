@@ -14,8 +14,8 @@ def run(with_unity=False):
     unity_src = "./unity_builds/Basic.x86_64 &"
     unity = None
     if with_unity:
-        os.system(unity_src)
-        time.sleep(5)
+        # os.system(unity_src)
+        # time.sleep(5)
         unity = mjremote()
         while not unity._s:  
             unity.connect() 

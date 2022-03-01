@@ -7,7 +7,7 @@ def proccess_shared_data(shared_data):
     spike_frame = None
     prev_spike_frame = None
     prev_timestamp = None
-
+    black_frame = None
     while True:
         width = shared_data[0]
         height = shared_data[1]
@@ -18,20 +18,10 @@ def proccess_shared_data(shared_data):
             params = list(shared_data[5])
             frame = np.array(list(image_data), dtype = np.uint8)
             depth_frame = np.array(list(depth_data), dtype = np.uint8)
-            if frame.max == 0:
-                print("Found 0 frame")
+            
         except:
             continue
         
-        if prev_timestamp == timestamp:
-            all_frames = cv2.vconcat([prev_frame, prev_depth_frame, prev_spike_frame])
-            cv2.imshow("", all_frames)
-            if cv2.waitKey(1) == 27:
-                break
-            continue
-
-        prev_timestamp = timestamp
-        #if shared_data is x than y
 
         frame = get_frame(width, height, frame)
         depth_frame = get_depth_frame(width, height, depth_frame)
@@ -41,21 +31,18 @@ def proccess_shared_data(shared_data):
        
         frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         prev_gray_frame, spike_frame = get_spike_frame(frame_gray, prev_gray_frame) # TODO add thresholds
-        if spike_frame is None:
-            if prev_spike_frame is not None:
-                spike_frame = prev_spike_frame.copy()
-            else:
-                continue
-       
         
-        
-        all_frames = cv2.vconcat([frame, depth_frame_bgr, spike_frame])
+        if spike_frame is None and prev_spike_frame is None:
+            all_frames = cv2.vconcat([frame, depth_frame_bgr, np.zeros_like(frame)])
+        elif spike_frame is None:
+            all_frames = cv2.vconcat([frame, depth_frame_bgr, prev_spike_frame])
+        else:     
+            all_frames = cv2.vconcat([frame, depth_frame_bgr, spike_frame])
+            prev_spike_frame = spike_frame.copy()
         cv2.imshow("", all_frames)
         if cv2.waitKey(1) == 27:
             break
-        prev_spike_frame = spike_frame.copy()
-        prev_depth_frame = depth_frame_bgr.copy()
-        prev_frame = frame.copy()
+        
 
     
     cv2.destroyAllWindows()
@@ -84,8 +71,8 @@ def get_depth_frame(width, height, frame):
 def get_spike_frame(frame, prev_frame):
     if np.array_equal(frame ,prev_frame):
         return frame, None
-    pos_th = 4
-    neg_th = 4
+    pos_th = 20
+    neg_th = 20
     
     src_shape = (frame.shape[0], frame.shape[1], 3) 
     colored_frame = None

@@ -10,9 +10,9 @@ if __name__ == "__main__":
     p1 = mp.Process(target=server.startServerAndPassData)
     p2 = mp.Process(target=run)
    
-    p1.start()
     p2.start()
+    p1.start()
   
     
-    p1.join()
     p2.join()
+    p1.join()

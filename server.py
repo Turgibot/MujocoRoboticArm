@@ -65,15 +65,21 @@ async def serve(servicer) -> None:
     await server.wait_for_termination()
     cv2.destroyAllWindows()
 
-def startServerAndPassData():
+ 
+def run():
     servicer = UnityStreamerServicer()
     logging.basicConfig(level=logging.INFO)
-    
-    p1 = mp.Process(target=data_handler.proccess_shared_data , args=(shared_data, ))
-    p1.start()
-   
     asyncio.get_event_loop().run_until_complete(serve(servicer))
 
-    p1.join()
-   
 
+def startServerAndPassData():
+    
+    
+    p2 = mp.Process(target=run)
+    p1 = mp.Process(target=data_handler.proccess_shared_data , args=(shared_data, ))
+    p2.start()
+    p1.start()
+    p2.join()
+    p1.join()
+
+  
